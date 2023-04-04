@@ -138,3 +138,52 @@ req.end();
 		res1.status(500).json({message:'Something went wrong'})
 	}
 }
+
+
+export const GetAScan = async(req1,res1) => {
+
+	const {token,id} = req1.body
+	console.log(id)
+
+	try {
+
+const nessusUrl = `https://172.17.12.80:8834/scans/${id}`;
+
+const options = {
+  headers: {
+    'X-Cookie': `token=${token}`,
+    'User-Agent': 'nessus-nodejs'
+  },
+  rejectUnauthorized: false
+};
+
+
+const req = https.request(nessusUrl, options, (res) => {
+  let data = '';
+  res.on('data', (chunk) => {
+    data += chunk;
+  });
+  res.on('end', () => {
+    const responseData = JSON.parse(data);
+    res1.status(200).json(responseData)
+
+    console.log(responseData);
+  });
+});
+
+req.on('error', (error) => {
+  console.error(error);
+});
+
+req.end();
+
+
+
+
+	}
+	catch(error)
+	{
+		console.log(error)
+		res1.status(500).json({message:'Something went wrong'})
+	}
+}
