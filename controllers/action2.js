@@ -3,6 +3,11 @@ import Nessus  from 'nessus-api-helper';
 import https from 'https';
 import mongoose from 'mongoose'
 import axios from 'axios'
+import xmlrpc from 'xmlrpc';
+import {parseStringPromise} from 'xml2js';
+import { XMLHttpRequest } from 'xmlhttprequest';
+
+
 
 
 export const UploadDoc = async(req,res) => {
@@ -185,5 +190,118 @@ req.end();
 	{
 		console.log(error)
 		res1.status(500).json({message:'Something went wrong'})
+	}
+}
+
+
+export const OpenVas = async(req,res) => {
+
+	try{
+
+		const ip = '172.17.12.21';
+		const username = 'admin';
+		const password = 'OpenVas@123';
+		const port = '9392'
+
+
+
+// const baseURL = 'http://172.17.12.21:9392';
+
+// axios.post(`${baseURL}/omp/login`, {
+//   username: 'admin',
+//   password: 'OpenVas@123'
+// })
+// .then(response => {
+//   const token = response.headers['x-auth-token'];
+//   console.log('Authenticated with token:', token);
+
+//   // Example: Get the list of all targets
+ 
+// })
+
+
+
+
+// const instance = axios.create({
+//   baseURL: `http://${ip}:${port}/omp/api/v1/auth`,
+//   timeout: 5000,
+//   headers: {'Content-Type': 'application/json'},
+//   httpsAgent: new https.Agent({
+//     rejectUnauthorized: false
+//   })
+// });
+
+// instance.post('/login', {
+//   username: username,
+//   password: password
+// })
+// .then((response) => {
+//   console.log(response.data);
+// })
+// .catch((error) => {
+//   console.error(error);
+// });
+
+
+
+
+// 		const options = {
+//   headers: {
+//     accept: 'application/json'
+//   },
+//   httpsAgent: new https.Agent({
+//     rejectUnauthorized: false
+//   })
+// };
+
+
+
+// const authUrl = `http://${ip}:${port}/omp/api/v1/auth`;
+// const response = await axios.post(authUrl, {
+//   username,
+//   password,
+// },{
+//   httpsAgent: new https.Agent({
+//     rejectUnauthorized: false
+//   })
+
+// })
+
+// const token = response.data.token;
+// console.log(token)
+	
+
+
+
+		// const client = xmlrpc.createClient({url});
+
+// 		const client = xmlrpc.createSecureClient({
+//   url,
+//   rejectUnauthorized: false
+// });
+
+// client.methodCall('authenticate', [username, password], (error, response) => {
+//   if (error) {
+//     console.error(error);
+//     res.status(500).json(error)
+//   } else {
+//     const sessionId = response;
+//     console.log(`Session ID: ${sessionId}`);
+//     res1.status(200).json(sessionId)
+//   }
+// });
+
+		
+
+
+
+
+	}
+	catch(error)
+	{
+
+		console.log(error)
+		res.status(500).json({message:'Something went wrong'})
+
 	}
 }
