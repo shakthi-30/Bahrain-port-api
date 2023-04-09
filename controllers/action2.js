@@ -1,11 +1,14 @@
 import Action2Model from '../model/action2.js'
 import Nessus  from 'nessus-api-helper';
 import https from 'https';
+import fs  from 'fs';
 import mongoose from 'mongoose'
 import axios from 'axios'
 import xmlrpc from 'xmlrpc';
+import request from 'request'
 import {parseStringPromise} from 'xml2js';
 import { XMLHttpRequest } from 'xmlhttprequest';
+import sql from 'mssql'
 
 
 
@@ -194,114 +197,140 @@ req.end();
 }
 
 
-export const OpenVas = async(req,res) => {
-
-	try{
-
-		const ip = '172.17.12.21';
-		const username = 'admin';
-		const password = 'OpenVas@123';
-		const port = '9392'
-
-
-
-// const baseURL = 'http://172.17.12.21:9392';
-
-// axios.post(`${baseURL}/omp/login`, {
-//   username: 'admin',
-//   password: 'OpenVas@123'
-// })
-// .then(response => {
-//   const token = response.headers['x-auth-token'];
-//   console.log('Authenticated with token:', token);
-
-//   // Example: Get the list of all targets
- 
-// })
 
 
 
 
-// const instance = axios.create({
-//   baseURL: `http://${ip}:${port}/omp/api/v1/auth`,
-//   timeout: 5000,
-//   headers: {'Content-Type': 'application/json'},
-//   httpsAgent: new https.Agent({
-//     rejectUnauthorized: false
-//   })
-// });
+export const SQL = async(req1,res1) => {
 
-// instance.post('/login', {
-//   username: username,
-//   password: password
-// })
-// .then((response) => {
-//   console.log(response.data);
-// })
-// .catch((error) => {
-//   console.error(error);
-// });
+  try{
 
-
-
-
-// 		const options = {
-//   headers: {
-//     accept: 'application/json'
-//   },
-//   httpsAgent: new https.Agent({
-//     rejectUnauthorized: false
-//   })
-// };
-
-
-
-// const authUrl = `http://${ip}:${port}/omp/api/v1/auth`;
-// const response = await axios.post(authUrl, {
-//   username,
-//   password,
-// },{
-//   httpsAgent: new https.Agent({
-//     rejectUnauthorized: false
-//   })
-
-// })
-
-// const token = response.data.token;
-// console.log(token)
-	
-
-
-
-		// const client = xmlrpc.createClient({url});
-
-// 		const client = xmlrpc.createSecureClient({
-//   url,
-//   rejectUnauthorized: false
-// });
-
-// client.methodCall('authenticate', [username, password], (error, response) => {
-//   if (error) {
-//     console.error(error);
-//     res.status(500).json(error)
-//   } else {
-//     const sessionId = response;
-//     console.log(`Session ID: ${sessionId}`);
-//     res1.status(200).json(sessionId)
-//   }
-// });
-
-		
-
-
-
-
-	}
-	catch(error)
-	{
-
-		console.log(error)
-		res.status(500).json({message:'Something went wrong'})
-
-	}
+    const config = {
+  user: 'zbx_monitor',
+  password: 'nV9jOQI88E6u',
+  server: '172.17.19.35', 
+  database: 'master',
+  options: {
+    trustServerCertificate: true
+  }
 }
+
+async function run() {
+ try {
+    await sql.connect(config)
+    
+    console.log('Connected to database');
+  
+   const pool = await sql.connect(config)
+  const request = pool.request()
+ 
+ const query = `USE master; EXEC xp_readerrorlog 0, 1, N\'Login failed\'`
+
+ const query2 = `SELECT  
+sys.server_principals.name AS LoginName, 
+sys.server_principals.type_desc AS LoginType, 
+sys.server_principals.create_date AS LoginCreated, 
+sys.server_principals.modify_date AS LoginLastModified, 
+sys.server_principals.is_disabled AS LoginDisabled, 
+LOGINPROPERTY(sys.server_principals.name, 'IsExpired') AS LoginExpired, 
+LOGINPROPERTY(sys.server_principals.name, 'IsLocked') AS LoginLocked, 
+LOGINPROPERTY(sys.server_principals.name, 'BadPasswordCount') AS LoginBadPasswordCount, 
+LOGINPROPERTY(sys.server_principals.name, 'DaysUntilExpiration') AS LoginDaysUntilExpiration, 
+LOGINPROPERTY(sys.server_principals.name, 'PasswordLastSetTime') AS LoginPasswordLastSetTime, 
+SERVERROLE.name AS ServerRole, 
+SERVERROLE.create_date AS ServerRoleCreated, 
+SERVERROLE.modify_date AS ServerRoleLastModified 
+
+FROM  
+
+    sys.server_principals 
+
+LEFT JOIN  
+
+    sys.server_role_members ON sys.server_principals.principal_id = sys.server_role_members.member_principal_id 
+
+LEFT JOIN  
+
+    sys.server_principals AS SERVERROLE ON sys.server_role_members.role_principal_id = SERVERROLE.principal_id 
+
+WHERE  
+
+    sys.server_principals.type_desc IN ('SQL_LOGIN', 'WINDOWS_LOGIN', 'WINDOWS_GROUP') 
+
+    AND sys.server_principals.is_disabled = 0 
+
+    AND SERVERROLE.name IN ('sysadmin', 'securityadmin', 'serveradmin', 'setupadmin') 
+
+ORDER BY  
+
+    LoginName ASC;
+`
+
+const query3 = `SELECT  
+  ses.login_name AS LoginName, 
+  ses.program_name AS Application, 
+  ses.host_name AS HostName, 
+  ses.login_time AS LoginTime 
+FROM  
+  sys.dm_exec_sessions AS ses 
+INNER JOIN  
+  sys.database_principals AS DP ON ses.login_name = DP.name 
+WHERE  
+  DP.type_desc IN ('SQL_USER', 'WINDOWS_USER', 'WINDOWS_GROUP') 
+ORDER BY  
+  LoginTime DESC;
+`
+const query4 =`SELECT TOP 10 
+  total_worker_time/execution_count AS AvgCPUTime, 
+  execution_count, 
+  total_elapsed_time/execution_count as AvgElapsedTime, 
+  (SELECT text FROM sys.dm_exec_sql_text(plan_handle)) AS QueryText 
+FROM  
+  sys.dm_exec_query_stats 
+ORDER BY  
+  AvgCPUTime DESC; 
+`
+const query5 = `SELECT TOP 10 
+  (total_logical_reads + total_logical_writes)/execution_count as AvgLogicalIO, 
+  total_worker_time/execution_count AS AvgCPUTime, 
+  total_elapsed_time/execution_count as AvgElapsedTime, 
+  (SELECT text FROM sys.dm_exec_sql_text(plan_handle)) AS QueryText 
+FROM  
+  sys.dm_exec_query_stats 
+ORDER BY  
+  AvgLogicalIO DESC; 
+`
+const result = await request.query(query)
+const result2 = await request.query(query2)
+const result3 = await request.query(query3)
+const result4 = await request.query(query4)
+const result5 = await request.query(query5)
+ res1.status(200).json({login:result,privileged:result2,userlogin:result3,CPU:result4,Memory:result5})
+console.log(result)
+console.log(result2)
+
+
+} catch (error) {
+
+    console.log(error)
+    res1.status(500).json({message:'Something went wrong'})
+    
+  }
+
+}
+
+run()
+
+
+  }
+
+  catch(error){
+
+    console.log(error)
+    res1.status(500).json({message:'Something went wrong'})
+
+  }
+
+	
+}
+
