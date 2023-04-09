@@ -300,14 +300,57 @@ FROM
 ORDER BY  
   AvgLogicalIO DESC; 
 `
+const query6=`exec usp_GetFailedLoginsListFromLastWeek `
+const query7 = `SELECT 
+bs.database_name, 
+bs.backup_start_date, 
+bs.backup_finish_date, 
+bs.server_name,  
+bs.user_name, 
+bs.type, 
+bm.physical_device_name 
+
+FROM msdb.dbo.backupset AS bs 
+
+INNER JOIN msdb.dbo.backupmediafamily AS bm on bs.media_set_id = bm.media_set_id`
+const query8=`SELECT 
+name, 
+LOGINPROPERTY(name, 'DaysUntilExpiration') AS  DaysUntilExpiration, 
+LOGINPROPERTY(name, 'PasswordLastSetTime') AS PasswordLastSetTime
+
+FROM 
+
+sys.sql_logins 
+
+WHERE 
+
+type_desc = 'SQL_LOGIN'`
+const query9=`SELECT 
+r.session_id, 
+r.status, 
+r.command, 
+t.text, 
+r.start_time, 
+
+    DATEDIFF(second, r.start_time, GETDATE()) as RunningTimeSeconds 
+
+FROM sys.dm_exec_requests r 
+
+CROSS APPLY sys.dm_exec_sql_text(r.sql_handle) t 
+
+WHERE r.status = 'running'`
 const result = await request.query(query)
 const result2 = await request.query(query2)
 const result3 = await request.query(query3)
 const result4 = await request.query(query4)
 const result5 = await request.query(query5)
- res1.status(200).json({login:result,privileged:result2,userlogin:result3,CPU:result4,Memory:result5})
+const result6 = await request.query(query6)
+const result7 = await request.query(query7)
+const result8 = await request.query(query8)
+const result9 = await request.query(query9)
+ res1.status(200).json({login:result,privileged:result2,userlogin:result3,CPU:result4,Memory:result5,Attempt:result6,backup:result7,password:result8,queries:result9})
 console.log(result)
-console.log(result2)
+console.log(result8)
 
 
 } catch (error) {
